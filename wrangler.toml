@@ -1,0 +1,13 @@
+name = "testing-center-checkout"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+[vars]
+CANCEL_URL = "https://ustestingcenter.com/"
+CORS_ORIGIN = "https://ustestingcenter.com"
+SUCCESS_URL = "https://ustestingcenter.com/take-test/?session_id={CHECKOUT_SESSION_ID}"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "testing-center-db"
+database_id = "54587cfa-1da9-41a3-bc08-db76bad13609"

@@ -1,0 +1,12 @@
+# Wrangler local cache
+.wrangler/
+
+# Local env / secrets — never commit
+.env
+.env.*
+.dev.vars
+
+# Editor / OS
+.DS_Store
+*.log
+node_modules/
