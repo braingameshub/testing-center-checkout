@@ -22,6 +22,7 @@ var PRICE_MAP = {
   "ap-calculus-bc": "price_1TO34QJ2OPfwlqFb5Hd1yjEa",
   "ap-chemistry": "price_1TO34RJ2OPfwlqFb6F8GYAAe",
   "ap-chinese": "price_1TO34RJ2OPfwlqFbDUga1kuz",
+  "ap-chinese-language": "price_1TO34RJ2OPfwlqFbDUga1kuz",
   "ap-computer-science-a": "price_1TO34SJ2OPfwlqFbEjMQ3wDO",
   "ap-computer-science-principles": "price_1TO34TJ2OPfwlqFb19qDAoJD",
   "ap-english-language": "price_1TO34TJ2OPfwlqFbTolGMFXZ",
@@ -29,12 +30,16 @@ var PRICE_MAP = {
   "ap-environmental-science": "price_1TO34VJ2OPfwlqFbTX4bTC6v",
   "ap-european-history": "price_1TO34VJ2OPfwlqFbhkKxKlOl",
   "ap-french": "price_1TO34WJ2OPfwlqFbYadrgfDX",
+  "ap-french-language": "price_1TO34WJ2OPfwlqFbYadrgfDX",
   "ap-german": "price_1TO34XJ2OPfwlqFbBUCSXVGy",
+  "ap-german-language": "price_1TO34XJ2OPfwlqFbBUCSXVGy",
   "ap-government": "price_1TO34XJ2OPfwlqFb4FNuZvg5",
   "ap-comparative-government": "price_1TO34YJ2OPfwlqFbaJcPEjaO",
   "ap-human-geography": "price_1TO34ZJ2OPfwlqFbWUqBIOFu",
   "ap-italian": "price_1TO34ZJ2OPfwlqFbOxqq9KAe",
+  "ap-italian-language": "price_1TO34ZJ2OPfwlqFbOxqq9KAe",
   "ap-japanese": "price_1TO34aJ2OPfwlqFbFMgETBhM",
+  "ap-japanese-language": "price_1TO34aJ2OPfwlqFbFMgETBhM",
   "ap-latin": "price_1TO34aJ2OPfwlqFb4HhBVlxl",
   "ap-macroeconomics": "price_1TO34bJ2OPfwlqFbfF6tuN0n",
   "ap-microeconomics": "price_1TO34cJ2OPfwlqFb3gN7jmqt",
@@ -71,6 +76,54 @@ var PRICE_MAP = {
   "ielts": "price_1TO64uJ2OPfwlqFbtVZVaLHI"
 };
 
+// Slug aliases — map alternate slugs used by marketing pages / question-bank
+// filenames to the canonical slug that has a Stripe Price + a delivering
+// question bank. Incoming ?test=<slug> is normalized through this before any
+// lookup, so the buy-button slug, the checkout slug, and the test-runtime slug
+// can never drift apart again. (Fixes the 2026-06 revenue-blocking 400s on the
+// AP world-language and AP Computer Science buy buttons.)
+//
+// IMPORTANT — alias direction: the stored test_type MUST equal the slug the
+// test-runtime (testing-center-api) keys its bundled question bank on. The only
+// confirmed datapoint is that "ap-spanish-language" (long form, matching its
+// ap-spanish-language.json bank file) delivers end-to-end — so AP world
+// languages are served by their LONG slug. We therefore do NOT alias the AP
+// language long forms to short; instead they are first-class entries in
+// PRICE_MAP/PRICE_CENTS below so checkout accepts AND stores the long form.
+//
+// The aliases that remain map a marketing-page/buy-button slug to the canonical
+// slug that already has a Stripe Price AND a matching bank. Computer Science
+// buttons used a short "ap-cs-*" form while the bank/checkout use the full
+// "ap-computer-science-*" form (= the ap-computer-science-*.json bank), so those
+// normalize forward to the long canonical. The professional/physics entries are
+// safety nets: their buy buttons and Stripe catalog already use the short slug
+// (so any prior purchases stored short); mapping the long bank-filename form to
+// that same short slug keeps every inbound variant resolving to one canonical.
+var SLUG_ALIASES = {
+  "ap-cs-a": "ap-computer-science-a",
+  "ap-cs-principles": "ap-computer-science-principles",
+  "ap-physics-c-mechanics": "ap-physics-c-mech",
+  "aws-cloud-practitioner": "aws-cloud",
+  "cpa-exam": "cpa",
+  "nclex-rn": "nclex",
+  "real-estate-license": "real-estate",
+  // AP world languages are delivered by their LONG slug (the ap-*-language.json
+  // bank, confirmed end-to-end for ap-spanish-language). The short marketing
+  // slugs had no matching bank, so a purchase via the short slug stored a
+  // test_type the runtime could not serve (pay-without-delivery). Alias the
+  // short forms forward to the long canonical so every inbound variant resolves
+  // to a deliverable bank. (Audit 2026-06-14.)
+  "ap-chinese": "ap-chinese-language",
+  "ap-french": "ap-french-language",
+  "ap-german": "ap-german-language",
+  "ap-italian": "ap-italian-language",
+  "ap-japanese": "ap-japanese-language"
+};
+function canonicalSlug(slug) {
+  return (slug && SLUG_ALIASES[slug]) || slug;
+}
+__name(canonicalSlug, "canonicalSlug");
+
 // Full price map in cents for all tests (used for retests and new tests without Stripe price IDs yet)
 var PRICE_CENTS = {
   // IQ Tests
@@ -83,11 +136,15 @@ var PRICE_CENTS = {
   "sat": 9900, "act": 9900, "psat": 6900,
   // All AP tests at $49.99
   "ap-biology": 4999, "ap-calculus-ab": 4999, "ap-calculus-bc": 4999, "ap-chemistry": 4999,
-  "ap-chinese": 4999, "ap-computer-science-a": 4999, "ap-computer-science-principles": 4999,
+  "ap-chinese": 4999, "ap-chinese-language": 4999,
+  "ap-computer-science-a": 4999, "ap-computer-science-principles": 4999,
   "ap-english-language": 4999, "ap-english-literature": 4999, "ap-environmental-science": 4999,
-  "ap-european-history": 4999, "ap-french": 4999, "ap-german": 4999, "ap-government": 4999,
-  "ap-comparative-government": 4999, "ap-human-geography": 4999, "ap-italian": 4999,
-  "ap-japanese": 4999, "ap-latin": 4999, "ap-macroeconomics": 4999, "ap-microeconomics": 4999,
+  "ap-european-history": 4999, "ap-french": 4999, "ap-french-language": 4999,
+  "ap-german": 4999, "ap-german-language": 4999, "ap-government": 4999,
+  "ap-comparative-government": 4999, "ap-human-geography": 4999,
+  "ap-italian": 4999, "ap-italian-language": 4999,
+  "ap-japanese": 4999, "ap-japanese-language": 4999,
+  "ap-latin": 4999, "ap-macroeconomics": 4999, "ap-microeconomics": 4999,
   "ap-music-theory": 4999, "ap-physics-1": 4999, "ap-physics-2": 4999,
   "ap-physics-c-em": 4999, "ap-physics-c-mech": 4999, "ap-psychology": 4999,
   "ap-research": 4999, "ap-seminar": 4999, "ap-spanish-language": 4999,
@@ -114,31 +171,32 @@ var TEST_NAMES = {
   "couples-iq": "Couples IQ Test", "stress-iq": "Stress IQ Test", "qiq-careers": "QIQ Career Test",
   "bible-iq": "Bible IQ Test", "eq-assessment": "EQ Assessment", "career-aptitude": "Career Aptitude Test",
   "personality-assessment": "Personality Assessment", "memory-brain-age": "Memory & Brain Age Test",
-  "sat": "SAT Practice Test", "act": "ACT Practice Test", "psat": "PSAT Practice Test",
-  "gre": "GRE Practice Test", "gmat": "GMAT Practice Test", "lsat": "LSAT Practice Test",
-  "mcat": "MCAT Practice Test", "asvab": "ASVAB Practice Test", "civil-service": "Civil Service Exam",
-  "ged": "GED Practice Test", "dmv-permit": "DMV Permit Practice Test",
-  "toefl": "TOEFL Practice Test", "ielts": "IELTS Practice Test",
-  "comptia-a-plus": "CompTIA A+ Practice Test", "nclex": "NCLEX-RN Practice Test",
-  "cpa": "CPA Exam Practice Test", "series-7": "Series 7 Practice Test",
-  "real-estate": "Real Estate License Practice Test", "bar-exam-mbe": "Bar Exam (MBE) Practice Test",
-  "pmp": "PMP Practice Test", "aws-cloud": "AWS Cloud Practitioner Practice Test",
-  "cissp": "CISSP Practice Test", "fe-exam": "FE Exam Practice Test",
-  "phr-shrm": "PHR/SHRM-CP Practice Test", "cma-medical": "CMA Medical Assistant Practice Test",
-  "ptce": "Pharmacy Tech (PTCE) Practice Test", "personal-trainer": "Personal Trainer Practice Test",
-  "insurance-pc": "Insurance License (P&C) Practice Test", "cdl-permit": "CDL Permit Practice Test"
+  "sat": "SAT Mirrored Preparation Test", "act": "ACT Mirrored Preparation Test", "psat": "PSAT Mirrored Preparation Test",
+  "gre": "GRE Mirrored Preparation Test", "gmat": "GMAT Mirrored Preparation Test", "lsat": "LSAT Mirrored Preparation Test",
+  "mcat": "MCAT Mirrored Preparation Test", "asvab": "ASVAB Mirrored Preparation Test", "civil-service": "Civil Service Exam",
+  "ged": "GED Mirrored Preparation Test", "dmv-permit": "DMV Permit Mirrored Preparation Test",
+  "toefl": "TOEFL Mirrored Preparation Test", "ielts": "IELTS Mirrored Preparation Test",
+  "comptia-a-plus": "CompTIA A+ Mirrored Preparation Test", "nclex": "NCLEX-RN Mirrored Preparation Test",
+  "cpa": "CPA Exam Mirrored Preparation Test", "series-7": "Series 7 Mirrored Preparation Test",
+  "real-estate": "Real Estate License Mirrored Preparation Test", "bar-exam-mbe": "Bar Exam (MBE) Mirrored Preparation Test",
+  "pmp": "PMP Mirrored Preparation Test", "aws-cloud": "AWS Cloud Practitioner Mirrored Preparation Test",
+  "cissp": "CISSP Mirrored Preparation Test", "fe-exam": "FE Exam Mirrored Preparation Test",
+  "phr-shrm": "PHR/SHRM-CP Mirrored Preparation Test", "cma-medical": "CMA Medical Assistant Mirrored Preparation Test",
+  "ptce": "Pharmacy Tech (PTCE) Mirrored Preparation Test", "personal-trainer": "Personal Trainer Mirrored Preparation Test",
+  "insurance-pc": "Insurance License (P&C) Mirrored Preparation Test", "cdl-permit": "CDL Permit Mirrored Preparation Test"
 };
 
 // Build test names for AP tests
 Object.keys(PRICE_CENTS).forEach(function(k) {
   if (k.startsWith("ap-") && !TEST_NAMES[k]) {
-    TEST_NAMES[k] = "AP " + k.replace("ap-", "").replace(/-/g, " ").replace(/\b\w/g, function(c) { return c.toUpperCase(); }) + " Practice Test";
+    TEST_NAMES[k] = "AP " + k.replace("ap-", "").replace(/-/g, " ").replace(/\b\w/g, function(c) { return c.toUpperCase(); }) + " Mirrored Preparation Test";
   }
 });
 
 async function handleCheckout(request, env) {
   const url = new URL(request.url);
-  const testType = url.searchParams.get("test_type") || url.searchParams.get("test");
+  const rawTestType = url.searchParams.get("test_type") || url.searchParams.get("test");
+  const testType = canonicalSlug(rawTestType);
   const isRetest = url.searchParams.get("retest") === "true";
   const credentialId = url.searchParams.get("credential");
 
@@ -175,8 +233,8 @@ async function handleCheckout(request, env) {
         });
       }
 
-      // Verify the credential matches the requested test type
-      if (row.test_type !== testType) {
+      // Verify the credential matches the requested test type (compare canonical slugs)
+      if (canonicalSlug(row.test_type) !== testType) {
         return new Response(JSON.stringify({ error: "Credential ID does not match the requested test type." }), {
           status: 403,
           headers: { "Content-Type": "application/json" }
@@ -283,7 +341,7 @@ async function handleCheckout(request, env) {
   params.set("line_items[0][price_data][currency]", "usd");
   params.set("line_items[0][price_data][unit_amount]", String(priceCents));
   params.set("line_items[0][price_data][product_data][name]", testName);
-  params.set("line_items[0][price_data][product_data][description]", "Professional practice test by US Testing Center - Parker Mirror Method");
+  params.set("line_items[0][price_data][product_data][description]", "Authentic mirrored preparation test by US Testing Center - the ALA Mirror Method");
   params.set("line_items[0][quantity]", "1");
   params.set("success_url", env.SUCCESS_URL);
   params.set("cancel_url", env.CANCEL_URL);
@@ -329,6 +387,65 @@ function generateSessionId() {
   return `tc_${Date.now().toString(36)}_${hex}`;
 }
 __name(generateSessionId, "generateSessionId");
+
+// Idempotent provisioning. Given a paid Stripe Checkout Session object, return
+// the existing DB row if one already exists for this stripe_session_id (so a
+// webhook retry, or the success-page fallback racing the webhook, can never
+// mint a second credential for one payment), otherwise insert and return a new
+// row. This is the single source of truth used by BOTH the webhook and the
+// /validate success-page fallback.
+async function provisionSession(env, stripeSession) {
+  const existing = await env.DB.prepare(
+    `SELECT session_id, display_id, stripe_session_id, test_type, user_email, payment_verified, status, created_at, expires_at
+     FROM sessions WHERE stripe_session_id = ? LIMIT 1`
+  ).bind(stripeSession.id).first();
+  if (existing) return { row: existing, created: false };
+
+  const testType = canonicalSlug(stripeSession.metadata && stripeSession.metadata.test_type) || "unknown";
+  // Stripe Checkout always collects the buyer's email; it lands in
+  // customer_details.email. (The old code read session.customer_email, which is
+  // only populated when pre-filled — so every purchase stored an empty email.)
+  const email = (stripeSession.customer_details && stripeSession.customer_details.email)
+    || stripeSession.customer_email
+    || "";
+  const sessionId = generateSessionId();
+  const displayId = generateDisplayId();
+  const now = (/* @__PURE__ */ new Date()).toISOString();
+  const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1e3).toISOString();
+
+  try {
+    await env.DB.prepare(
+      `INSERT INTO sessions (session_id, display_id, stripe_session_id, test_type, user_email, payment_verified, created_at, expires_at)
+       VALUES (?, ?, ?, ?, ?, 1, ?, ?)`
+    ).bind(sessionId, displayId, stripeSession.id, testType, email, now, expiresAt).run();
+  } catch (err) {
+    // Lost the insert race against a concurrent webhook/validate — fall back to
+    // whatever row won, so the caller still gets one consistent credential.
+    const raced = await env.DB.prepare(
+      `SELECT session_id, display_id, stripe_session_id, test_type, user_email, payment_verified, status, created_at, expires_at
+       FROM sessions WHERE stripe_session_id = ? LIMIT 1`
+    ).bind(stripeSession.id).first();
+    if (raced) return { row: raced, created: false };
+    throw err;
+  }
+
+  return {
+    row: {
+      session_id: sessionId,
+      display_id: displayId,
+      stripe_session_id: stripeSession.id,
+      test_type: testType,
+      user_email: email,
+      payment_verified: 1,
+      status: null,
+      created_at: now,
+      expires_at: expiresAt
+    },
+    created: true
+  };
+}
+__name(provisionSession, "provisionSession");
+
 async function verifyStripeSignature(payload, sigHeader, secret) {
   const parts = {};
   for (const item of sigHeader.split(",")) {
@@ -381,34 +498,35 @@ async function handleWebhook(request, env) {
     });
   }
   const session = event.data.object;
-  const testType = session.metadata?.test_type || "unknown";
+  // Only provision once payment is actually captured.
+  if (session.payment_status && session.payment_status !== "paid") {
+    return new Response(JSON.stringify({ received: true, skipped: "unpaid" }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" }
+    });
+  }
   const isRetest = session.metadata?.is_retest === "true";
   const originalCredential = session.metadata?.original_credential || "";
-  const sessionId = generateSessionId();
-  const displayId = generateDisplayId();
-  const now = (/* @__PURE__ */ new Date()).toISOString();
-  const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1e3).toISOString();
-  await env.DB.prepare(
-    `INSERT INTO sessions (session_id, display_id, stripe_session_id, test_type, user_email, payment_verified, created_at, expires_at)
-     VALUES (?, ?, ?, ?, ?, 1, ?, ?)`
-  ).bind(
-    sessionId,
-    displayId,
-    session.id,
-    testType,
-    session.customer_email || "",
-    now,
-    expiresAt
-  ).run();
-  return new Response(JSON.stringify({
-    sessionId,
-    displayId,
-    isRetest,
-    originalCredential
-  }), {
-    status: 200,
-    headers: { "Content-Type": "application/json" }
-  });
+
+  try {
+    const { row } = await provisionSession(env, session);
+    return new Response(JSON.stringify({
+      sessionId: row.session_id,
+      displayId: row.display_id,
+      isRetest,
+      originalCredential
+    }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" }
+    });
+  } catch (err) {
+    console.error("Webhook provisioning error:", err);
+    // Return 500 so Stripe retries; provisionSession is idempotent.
+    return new Response(JSON.stringify({ error: "Provisioning failed" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" }
+    });
+  }
 }
 __name(handleWebhook, "handleWebhook");
 
@@ -421,6 +539,22 @@ function corsHeaders(env) {
   };
 }
 __name(corsHeaders, "corsHeaders");
+
+// Retrieve a Checkout Session straight from Stripe. Used by /validate as a
+// fallback when the webhook-created row is not in D1 yet (Stripe redirects the
+// buyer to the success page immediately, but the webhook is asynchronous and
+// can lag by seconds — without this the buyer would see "Could not validate
+// payment session" right after paying).
+async function retrieveStripeSession(env, stripeSessionId) {
+  const res = await fetch(
+    `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(stripeSessionId)}`,
+    { headers: { "Authorization": `Bearer ${env.STRIPE_SECRET_KEY}` } }
+  );
+  if (!res.ok) return null;
+  return res.json();
+}
+__name(retrieveStripeSession, "retrieveStripeSession");
+
 async function handleValidate(request, env) {
   const url = new URL(request.url);
   const sessionId = url.searchParams.get("session_id");
@@ -431,12 +565,30 @@ async function handleValidate(request, env) {
     });
   }
   try {
-    const row = await env.DB.prepare(
+    let row = await env.DB.prepare(
       `SELECT session_id, display_id, stripe_session_id, test_type, user_email, payment_verified, status, created_at, expires_at
        FROM sessions
        WHERE stripe_session_id = ? OR session_id = ?
        LIMIT 1`
     ).bind(sessionId, sessionId).first();
+
+    // Race fallback: row not in D1 yet. If this is a real, paid Stripe Checkout
+    // Session, provision it now (idempotent with the webhook) so the buyer is
+    // never blocked on the success page by webhook latency.
+    if (!row && sessionId.startsWith("cs_")) {
+      const stripeSession = await retrieveStripeSession(env, sessionId);
+      if (stripeSession && (stripeSession.payment_status === "paid" || stripeSession.status === "complete")) {
+        const provisioned = await provisionSession(env, stripeSession);
+        row = provisioned.row;
+      } else if (stripeSession) {
+        // Found at Stripe but not paid yet (e.g. async payment processing).
+        return new Response(JSON.stringify({ error: "Payment not completed yet", payment_status: stripeSession.payment_status || stripeSession.status }), {
+          status: 402,
+          headers: { "Content-Type": "application/json", ...corsHeaders(env) }
+        });
+      }
+    }
+
     if (!row) {
       return new Response(JSON.stringify({ error: "Session not found" }), {
         status: 404,
@@ -470,6 +622,13 @@ var index_default = {
     try {
       if (path === "/checkout" && request.method === "GET") {
         return handleCheckout(request, env);
+      }
+      // /retest is documented as a route; route it through the same handler
+      // (it reads ?retest=true&credential=...&test=...).
+      if (path === "/retest" && request.method === "GET") {
+        const u = new URL(request.url);
+        u.searchParams.set("retest", "true");
+        return handleCheckout(new Request(u.toString(), request), env);
       }
       if (path === "/webhook" && request.method === "POST") {
         return handleWebhook(request, env);
