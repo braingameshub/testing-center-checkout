@@ -156,6 +156,7 @@ var PRICE_CENTS = {
   "gre": 9900, "gmat": 9900, "lsat": 11900, "mcat": 14900,
   // Military & Government
   "asvab": 4999, "civil-service": 4999, "ged": 4999, "dmv-permit": 2900,
+  "us-citizenship": 4999,
   // Language
   "toefl": 4999, "ielts": 4999,
   // Professional
@@ -175,6 +176,7 @@ var TEST_NAMES = {
   "gre": "GRE Mirrored Preparation Test", "gmat": "GMAT Mirrored Preparation Test", "lsat": "LSAT Mirrored Preparation Test",
   "mcat": "MCAT Mirrored Preparation Test", "asvab": "ASVAB Mirrored Preparation Test", "civil-service": "Civil Service Exam",
   "ged": "GED Mirrored Preparation Test", "dmv-permit": "DMV Permit Mirrored Preparation Test",
+  "us-citizenship": "US Citizenship Test",
   "toefl": "TOEFL Mirrored Preparation Test", "ielts": "IELTS Mirrored Preparation Test",
   "comptia-a-plus": "CompTIA A+ Mirrored Preparation Test", "nclex": "NCLEX-RN Mirrored Preparation Test",
   "cpa": "CPA Exam Mirrored Preparation Test", "series-7": "Series 7 Mirrored Preparation Test",
