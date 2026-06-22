@@ -1,4 +1,4 @@
-name = "testing-center-checkout"
+name = "testing-center-checkout-qa"
 main = "index.js"
 compatibility_date = "2024-01-01"
 
@@ -7,13 +7,13 @@ CANCEL_URL = "https://ustestingcenter.com/"
 CORS_ORIGIN = "https://ustestingcenter.com"
 SUCCESS_URL = "https://ustestingcenter.com/take-test/?session_id={CHECKOUT_SESSION_ID}"
 
+# Bound to PROD testing-center-db on purpose: this QA harness provisions a
+# real session row the LIVE api worker can serve, then deletes it afterward.
 [[d1_databases]]
 binding = "DB"
 database_name = "testing-center-db"
 database_id = "54587cfa-1da9-41a3-bc08-db76bad13609"
 
-# Read-only: provisionSession reads test_config_<slug>.total_questions so the
-# session row carries the test's real question count (api worker relies on it).
 [[kv_namespaces]]
 binding = "CONFIG"
 id = "9431596a80c54e7db1716b2fc537ff26"

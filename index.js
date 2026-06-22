@@ -415,11 +415,23 @@ async function provisionSession(env, stripeSession) {
   const now = (/* @__PURE__ */ new Date()).toISOString();
   const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1e3).toISOString();
 
+  // The api worker serves/scores questions strictly off sessions.total_questions
+  // (it never reads CONFIG), so it MUST be set here from the test config or the
+  // buyer is served the schema default (50) instead of the test's real count.
+  let totalQuestions = 50;
+  try {
+    const cfgStr = env.CONFIG ? await env.CONFIG.get(`test_config_${testType}`) : null;
+    const n = cfgStr && JSON.parse(cfgStr).total_questions;
+    if (Number.isInteger(n) && n > 0) totalQuestions = n;
+  } catch (_) {
+    // fall back to the schema default if config is missing/unparseable
+  }
+
   try {
     await env.DB.prepare(
-      `INSERT INTO sessions (session_id, display_id, stripe_session_id, test_type, user_email, payment_verified, created_at, expires_at)
-       VALUES (?, ?, ?, ?, ?, 1, ?, ?)`
-    ).bind(sessionId, displayId, stripeSession.id, testType, email, now, expiresAt).run();
+      `INSERT INTO sessions (session_id, display_id, stripe_session_id, test_type, user_email, payment_verified, total_questions, created_at, expires_at)
+       VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?)`
+    ).bind(sessionId, displayId, stripeSession.id, testType, email, totalQuestions, now, expiresAt).run();
   } catch (err) {
     // Lost the insert race against a concurrent webhook/validate — fall back to
     // whatever row won, so the caller still gets one consistent credential.
